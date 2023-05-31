@@ -8,11 +8,13 @@ public class PlayerController : MonoBehaviour
 {
     private readonly int jumpForce = 11;
     private readonly int additionalJumpForce = 9;
-    private readonly float speed = 7.5f;
+    private readonly float baseSpeed = 6f;
     private readonly float maxVelocity = 12f;
+    private float speed = 6f;
     private float horizontalInput = 0;
     private bool grounded = false;
     private bool jump = false;
+    private int growCount = 0;
     private Vector3 currentVelocity = Vector3.zero;
     [SerializeField] private Animator animator;
     [SerializeField] private AudioSource audioSource;
@@ -41,6 +43,7 @@ public class PlayerController : MonoBehaviour
         private set
         {
             _scale = value;
+            transform.localScale = new Vector3(_scale, _scale, _scale);
         }
     }
 
@@ -163,5 +166,28 @@ public class PlayerController : MonoBehaviour
     {
         if (isDead)
             return;
+
+        bool destroyCollision = false;
+        switch(collision.tag)
+        {
+            case "GrowPowerUp":
+                IncreaseGrowLogic();
+                destroyCollision = true;
+                break;
+            default:
+                break;
+        }
+
+        if (destroyCollision)
+        {
+            Destroy(collision.gameObject);
+        }
+    }
+
+    private void IncreaseGrowLogic()
+    {
+        growCount++;
+        Scale = 1 * (growCount + 1);
+        speed = baseSpeed - growCount;
     }
 }
