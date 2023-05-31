@@ -10,11 +10,15 @@ public class PlayerController : MonoBehaviour
     private readonly int additionalJumpForce = 9;
     private readonly float baseSpeed = 6f;
     private readonly float maxVelocity = 12f;
+    private readonly float coyoteTime = .2f;
+    private readonly float jumpBufferTime = .2f;
     private float speed = 6f;
     private float horizontalInput = 0;
     private bool grounded = false;
     private bool jump = false;
     private int growCount = 0;
+    private float coyoteTimeCounter = 0;
+    private float jumpBufferCounter = 0;
     private Vector3 currentVelocity = Vector3.zero;
     [SerializeField] private Animator animator;
     [SerializeField] private AudioSource audioSource;
@@ -60,10 +64,37 @@ public class PlayerController : MonoBehaviour
 
         horizontalInput = Input.GetAxisRaw("Horizontal");
 
+        // Coyote Time Logic
+        if (grounded)
+        {
+            coyoteTimeCounter = coyoteTime;
+        }
+        else
+        {
+            coyoteTimeCounter -= Time.deltaTime;
+        }
+
+        // Jump Buffer Logic
+        if (Input.GetButtonDown("Jump"))
+        {
+            jumpBufferCounter = jumpBufferTime;
+        }
+        else
+        {
+            jumpBufferCounter -= Time.deltaTime;
+        }
+
         // Control jumping
-        if (Input.GetButtonDown("Jump") && (grounded || Jumps > 0))
+        if ((jumpBufferCounter > 0f) && (coyoteTimeCounter > 0f || Jumps > 0))
         {
             jump = true;
+            jumpBufferCounter = 0;
+        }
+
+        if (Input.GetButtonUp("Jump") && playerRB.velocity.y > 0f)
+        {
+            playerRB.velocity = new Vector2(playerRB.velocity.x, playerRB.velocity.y * .5f);
+            coyoteTimeCounter = 0;
         }
     }
 
