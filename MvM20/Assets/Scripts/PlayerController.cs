@@ -2,30 +2,45 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
-    private readonly int jumpForce = 11;
+    private readonly int baseJumpForce = 4;
+    private readonly int jumpMultiplier = 4;
     private readonly int additionalJumpForce = 9;
-    private readonly float baseSpeed = 6f;
-    private readonly float maxVelocity = 12f;
     private readonly float coyoteTime = .2f;
     private readonly float jumpBufferTime = .2f;
+    private readonly float scaleChangeTime = .25f;
+    private readonly float baseGravity = 2f;
+    private readonly float groundPoundGravity = 8f;
+    private readonly float poundForceScale = 3;
+    private readonly float minParticleSpeed = 2f;
+    private readonly float maxParticleSpeed = 6f;
+    private readonly float minParticleSize = .1f;
+    private readonly float maxParticleSize = .5f;
     private float speed = 6f;
     private float horizontalInput = 0;
     private bool grounded = false;
     private bool jump = false;
-    private int growCount = 0;
+    private bool groundPounding = false;
+    private int currentJumpForce;
     private float coyoteTimeCounter = 0;
     private float jumpBufferCounter = 0;
     private Vector3 currentVelocity = Vector3.zero;
+    private Vector3 smoothScaleChange = Vector3.zero;
     [SerializeField] private Animator animator;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private Rigidbody2D playerRB;
+    [SerializeField] private TrailRenderer poundTrail;
+    [SerializeField] private ParticleSystem particles;
+    public UnityEvent triggerScreenShake = new UnityEvent();
     public bool isDead { get; private set; } = false;
+    public bool HasPound { get; private set; } = true;
     private int _jumps = 0;
     private int _scale = 1;
+    public int GrowCount { get; private set; } = 0;
     public int Jumps
     {
         get
@@ -47,13 +62,13 @@ public class PlayerController : MonoBehaviour
         private set
         {
             _scale = value;
-            transform.localScale = new Vector3(_scale, _scale, _scale);
         }
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        currentJumpForce = baseJumpForce;
     }
 
     // Update is called once per frame
@@ -62,7 +77,7 @@ public class PlayerController : MonoBehaviour
         if (isDead)
             return;
 
-        horizontalInput = Input.GetAxisRaw("Horizontal");
+        horizontalInput = groundPounding ? 0 : Input.GetAxisRaw("Horizontal");
 
         // Coyote Time Logic
         if (grounded)
@@ -96,6 +111,11 @@ public class PlayerController : MonoBehaviour
             playerRB.velocity = new Vector2(playerRB.velocity.x, playerRB.velocity.y * .5f);
             coyoteTimeCounter = 0;
         }
+
+        if (HasPound && !grounded && Input.GetButtonDown("Pound"))
+        {
+            StartGroundPound();
+        }
     }
 
     private void FixedUpdate()
@@ -103,30 +123,13 @@ public class PlayerController : MonoBehaviour
         if (isDead)
             return;
 
+        UpdateScale();
         Move(horizontalInput * speed * Time.fixedDeltaTime);
-
-        // Cap the player's max velocity
-        CapYVelocity();
 
         // Control jumping
         if (jump)
         {
             StartJump();
-        }
-    }
-
-    private void CapYVelocity()
-    {
-        currentVelocity = playerRB.velocity;
-        if (currentVelocity.y > maxVelocity)
-        {
-            currentVelocity.y = maxVelocity;
-            playerRB.velocity = currentVelocity;
-        }
-        else if (currentVelocity.y < -maxVelocity)
-        {
-            currentVelocity.y = -maxVelocity;
-            playerRB.velocity = currentVelocity;
         }
     }
 
@@ -142,7 +145,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // animator.SetTrigger("jump");
-        playerRB.AddForce(Vector3.up * (grounded ? jumpForce : additionalJumpForce), ForceMode2D.Impulse);
+        playerRB.AddForce(Vector3.up * (grounded ? currentJumpForce : additionalJumpForce), ForceMode2D.Impulse);
 
         jump = false;
     }
@@ -154,9 +157,26 @@ public class PlayerController : MonoBehaviour
         playerRB.velocity = Vector3.SmoothDamp(playerRB.velocity, targetVelocity, ref currentVelocity, 0);
     }
 
+    private void UpdateScale()
+    {
+        if (transform.localScale.x != Scale)
+        {
+            transform.localScale = Vector3.SmoothDamp(transform.localScale, new Vector3(_scale, _scale, _scale), ref smoothScaleChange, scaleChangeTime);
+        }
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        CheckGrounding(collision);
+        bool brokeBlock = false;
+        if (groundPounding && collision.collider.tag == "Breakable")
+        {
+            brokeBlock = PerformBreakLogic(collision.collider.gameObject);
+        }
+
+        if (!brokeBlock)
+        {
+            CheckGrounding(collision);
+        }
     }
     private void OnCollisionStay2D(Collision2D collision)
     {
@@ -181,6 +201,7 @@ public class PlayerController : MonoBehaviour
         {
             // animator.ResetTrigger("jump");
             Jumps = 0;
+            EndGroundPount();
         }
     }
 
@@ -217,8 +238,53 @@ public class PlayerController : MonoBehaviour
 
     private void IncreaseGrowLogic()
     {
-        growCount++;
-        Scale = 1 * (growCount + 1);
-        speed = baseSpeed - growCount;
+        GrowCount++;
+        Scale = 1 * (GrowCount + 1);
+        currentJumpForce = baseJumpForce + jumpMultiplier * GrowCount;
+    }
+
+    private void StartGroundPound()
+    {
+        groundPounding = true;
+        playerRB.gravityScale = groundPoundGravity;
+        horizontalInput = 0;
+        playerRB.velocity = new Vector2(0, playerRB.velocity.y);
+        playerRB.AddForce(Vector3.down * (additionalJumpForce + Scale*poundForceScale), ForceMode2D.Impulse);
+        poundTrail.startWidth = Scale;
+        poundTrail.emitting = true;
+    }
+
+    private void EndGroundPount()
+    {
+        if (groundPounding)
+        {
+            playerRB.gravityScale = baseGravity;
+            groundPounding = false;
+            triggerScreenShake.Invoke();
+            poundTrail.emitting = false;
+            var particleMain = particles.main;
+            var startSpeed = particleMain.startSpeed;
+            var startSize = particleMain.startSize;
+            startSpeed.constantMin = minParticleSpeed * Scale;
+            startSpeed.constantMax = maxParticleSpeed * Scale;
+            startSize.constantMin = minParticleSize * Scale;
+            startSize.constantMax = maxParticleSize * Scale;
+            particleMain.startSpeed = startSpeed;
+            particleMain.startSize = startSize;
+            particles.Play();
+        }
+    }
+
+    private bool PerformBreakLogic(GameObject breakable)
+    {
+        BreakableBlock breakableBlock= breakable.GetComponent<BreakableBlock>();
+        if (breakableBlock.CanBreak(GrowCount))
+        {
+            triggerScreenShake.Invoke();
+            breakableBlock.StartBreaking();
+            return true;
+        }
+
+        return false;
     }
 }

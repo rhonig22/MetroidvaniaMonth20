@@ -6,11 +6,12 @@ public class CameraController : MonoBehaviour
 {
     [SerializeField] private GameObject player;
     [SerializeField] private Camera mainCamera;
+    [SerializeField] private Animator cameraAnimator;
     private PlayerController playerController;
     private readonly float baseZindex = -10;
     private readonly float orthoSize = 5;
     private readonly float yPosThreshold = 5;
-    private readonly float axisChangeTime = 1f;
+    private readonly float axisChangeTime = .25f;
     private readonly float minZoom = 0;
     private readonly float maxZoom = 10;
     private readonly float zoomSmoothTime = .25f;
@@ -25,6 +26,7 @@ public class CameraController : MonoBehaviour
     {
         playerController = player.GetComponent<PlayerController>();
         currentZoom = mainCamera.orthographicSize;
+        playerController.triggerScreenShake.AddListener(() => { cameraAnimator.SetTrigger("Shake"); });
     }
 
     // Update is called once per frame
@@ -46,9 +48,9 @@ public class CameraController : MonoBehaviour
 
     void ScaleCameraZoom()
     {
-        float zoom = orthoSize + (playerController.Scale - 1);
-        zoom = Mathf.Clamp(zoom, minZoom, maxZoom);
-        mainCamera.orthographicSize = Mathf.SmoothDamp(mainCamera.orthographicSize, zoom, ref zoomVelocity, zoomSmoothTime);
+        currentZoom = orthoSize + playerController.GrowCount;
+        currentZoom = Mathf.Clamp(currentZoom, minZoom, maxZoom);
+        mainCamera.orthographicSize = Mathf.SmoothDamp(mainCamera.orthographicSize, currentZoom, ref zoomVelocity, zoomSmoothTime);
     }
 
     void CheckYThreshold()
