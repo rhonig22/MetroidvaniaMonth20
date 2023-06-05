@@ -20,6 +20,8 @@ public class PlayerController : MonoBehaviour
     private readonly float maxParticleSpeed = 6f;
     private readonly float minParticleSize = .1f;
     private readonly float maxParticleSize = .5f;
+    private readonly float slowFactor = .05f;
+    private readonly float slowDuration = .5f;
     private float speed = 6f;
     private float horizontalInput = 0;
     private bool grounded = false;
@@ -35,6 +37,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Rigidbody2D playerRB;
     [SerializeField] private TrailRenderer poundTrail;
     [SerializeField] private ParticleSystem particles;
+    [SerializeField] private TimeManager timeManager;
     public UnityEvent triggerScreenShake = new UnityEvent();
     public bool isDead { get; private set; } = false;
     public bool HasPound { get; private set; } = true;
@@ -280,6 +283,7 @@ public class PlayerController : MonoBehaviour
         BreakableBlock breakableBlock= breakable.GetComponent<BreakableBlock>();
         if (breakableBlock.CanBreak(GrowCount))
         {
+            timeManager.DoSlowmotion(slowFactor, slowDuration);
             triggerScreenShake.Invoke();
             breakableBlock.StartBreaking();
             return true;
