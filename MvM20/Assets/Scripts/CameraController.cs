@@ -11,7 +11,7 @@ public class CameraController : MonoBehaviour
     private readonly float baseZindex = -10;
     private readonly float orthoSize = 5;
     private readonly float yPosThreshold = 5;
-    private readonly float axisChangeTime = .25f;
+    private readonly float axisChangeTime = .15f;
     private readonly float minZoom = 0;
     private readonly float maxZoom = 10;
     private readonly float zoomSmoothTime = .25f;
@@ -59,10 +59,11 @@ public class CameraController : MonoBehaviour
             return;
 
         var playerYpos = player.transform.position.y;
+        float threshold = yPosThreshold + playerController.GrowCount;
         if (playerYpos > currentYpos + yPosThreshold)
-            yPosChange = yPosThreshold;
+            yPosChange = threshold;
         else if (playerYpos < currentYpos - yPosThreshold)
-            yPosChange = -yPosThreshold;
+            yPosChange = -threshold;
 
         if (yPosChange != 0)
             StartCoroutine(moveYAxis());
