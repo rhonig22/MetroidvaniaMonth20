@@ -42,6 +42,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private TrailRenderer poundTrail;
     [SerializeField] private ParticleSystem particles;
     [SerializeField] private TimeManager timeManager;
+    private StickyObject sticky;
     public UnityEvent triggerScreenShake = new UnityEvent();
     public bool isDead { get; private set; } = false;
     public bool HasPound { get; private set; } = false;
@@ -77,6 +78,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         currentJumpForce = baseJumpForce;
+        sticky = GetComponent<StickyObject>();
     }
 
     // Update is called once per frame
@@ -152,6 +154,8 @@ public class PlayerController : MonoBehaviour
         {
             StartJump();
         }
+
+        playerRB.velocity = playerRB.velocity + sticky.AdditionalVelocity;
     }
 
     private void StartJump()
@@ -199,6 +203,7 @@ public class PlayerController : MonoBehaviour
             CheckGrounding(collision);
         }
     }
+
     private void OnCollisionStay2D(Collision2D collision)
     {
         CheckGrounding(collision);

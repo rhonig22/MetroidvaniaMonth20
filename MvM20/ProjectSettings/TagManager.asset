@@ -8,6 +8,7 @@ TagManager:
   - Breakable
   - GroundPound
   - Rebound
+  - Moving
   layers:
   - Default
   - TransparentFX
