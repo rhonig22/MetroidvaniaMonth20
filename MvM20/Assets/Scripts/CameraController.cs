@@ -32,7 +32,7 @@ public class CameraController : MonoBehaviour
 
     void ScaleCameraZoom()
     {
-        currentZoom = orthoSize + playerController.GrowCount;
+        currentZoom = orthoSize + DataManager.GrowCount;
         currentZoom = Mathf.Clamp(currentZoom, minZoom, maxZoom);
         mainCamera.m_Lens.OrthographicSize = Mathf.SmoothDamp(mainCamera.m_Lens.OrthographicSize, currentZoom, ref zoomVelocity, zoomSmoothTime);
     }

@@ -49,7 +49,6 @@ public class PlayerController : MonoBehaviour
     public bool HasRebound { get; private set; } = false;
     private int _jumps = 0;
     private int _scale = 1;
-    public int GrowCount { get; private set; } = 0;
     public int Jumps
     {
         get
@@ -193,7 +192,7 @@ public class PlayerController : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         bool brokeBlock = false;
-        if (groundPounding && collision.collider.tag == "Breakable")
+        if ((groundPounding || rebounding) && collision.collider.tag == "Breakable")
         {
             brokeBlock = PerformBreakLogic(collision);
         }
@@ -250,7 +249,7 @@ public class PlayerController : MonoBehaviour
         switch(collision.tag)
         {
             case "GrowPowerUp":
-                IncreaseGrowLogic();
+                GrabGrowPowerUp();
                 destroyCollision = true;
                 break;
 
@@ -273,11 +272,15 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void IncreaseGrowLogic()
+    public void IncreaseGrowLogic()
     {
-        GrowCount++;
-        Scale = 1 * (GrowCount + 1);
-        currentJumpForce = baseJumpForce + jumpMultiplier * GrowCount;
+        Scale = 1 * (DataManager.GrowCount + 1);
+        currentJumpForce = baseJumpForce + jumpMultiplier * DataManager.GrowCount;
+    }
+
+    public void GrabGrowPowerUp()
+    {
+        DataManager.Instance.IncreaseGrowPowerUps();
     }
 
     private void GetGroundPoundLogic()
@@ -345,7 +348,7 @@ public class PlayerController : MonoBehaviour
     {
         GameObject breakable = collision.collider.gameObject;
         BreakableBlock breakableBlock= breakable.GetComponent<BreakableBlock>();
-        if (breakableBlock.CanBreak(GrowCount))
+        if (breakableBlock.CanBreak(DataManager.GrowCount))
         {
             timeManager.DoSlowmotion(slowFactor, slowDuration);
             triggerScreenShake.Invoke();
