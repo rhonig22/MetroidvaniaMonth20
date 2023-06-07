@@ -6,7 +6,7 @@ public class MovingBlock : MonoBehaviour
 {
     [SerializeField] Rigidbody2D blockRb;
     [SerializeField] GameObject blockSprite;
-    private float speed = 5;
+    private float speed = 3;
     private Vector2 currentVelocity = Vector2.zero;
     private bool flipped = false;
 
