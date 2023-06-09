@@ -27,8 +27,6 @@ public class PlayerController : MonoBehaviour
     private float horizontalInput = 0;
     private bool grounded = false;
     private bool jump = false;
-    private bool groundPounding = false;
-    private bool rebounding = false;
     private int currentJumpForce;
     private float coyoteTimeCounter = 0;
     private float jumpBufferCounter = 0;
@@ -44,6 +42,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private TimeManager timeManager;
     private StickyObject sticky;
     public UnityEvent triggerScreenShake = new UnityEvent();
+    public bool groundPounding { get; private set; } = false;
+    public bool rebounding { get; private set; } = false;
     public bool isDead { get; private set; } = false;
     public bool HasPound { get; private set; } = false;
     public bool HasRebound { get; private set; } = false;
