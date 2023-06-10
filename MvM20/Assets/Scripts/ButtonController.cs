@@ -19,6 +19,10 @@ public class ButtonController : MonoBehaviour
                 animator.SetTrigger("Pressed");
             }
         }
+        else if (collision.gameObject.tag == "Moving")
+        {
+            animator.SetTrigger("Pressed");
+        }
     }
 
     private void ButtonPressed()
