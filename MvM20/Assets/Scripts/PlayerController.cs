@@ -307,7 +307,9 @@ public class PlayerController : MonoBehaviour
     private void StartRebound()
     {
         rebounding = true;
-        playerRB.AddForce(Vector3.up * (currentJumpForce + landingVelocity/4), ForceMode2D.Impulse);
+        float newForce = currentJumpForce + landingVelocity / 4;
+        Debug.Log(newForce);
+        playerRB.AddForce(Vector3.up * newForce, ForceMode2D.Impulse);
         poundTrail.startWidth = Scale;
         poundTrail.emitting = true;
     }
@@ -339,7 +341,6 @@ public class PlayerController : MonoBehaviour
             if (HasRebound)
             {
                 reboundBufferCounter = reboundBufferTime;
-                Debug.Log(landingVelocity);
             }
         }
     }
