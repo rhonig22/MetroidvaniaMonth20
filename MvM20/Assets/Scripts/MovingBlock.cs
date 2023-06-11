@@ -6,14 +6,16 @@ public class MovingBlock : MonoBehaviour
 {
     [SerializeField] Rigidbody2D blockRb;
     [SerializeField] GameObject blockSprite;
+    private readonly float dontFlipTime = .5f;
     private float speed = 3;
     private Vector2 currentVelocity = Vector2.zero;
-    private bool flipped = false;
+    private float dontFlipTimer = 0;
 
     // Update is called once per frame
     void FixedUpdate()
     {
         Move(speed * Time.fixedDeltaTime);
+        dontFlipTimer -= Time.fixedDeltaTime;
     }
 
     private void Move(float xSpeed)
@@ -25,9 +27,27 @@ public class MovingBlock : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (flipped)
+        if (dontFlipTimer > 0)
             return;
 
+        Flip(collision);
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (dontFlipTimer > 0)
+            return;
+
+        Flip(collision);
+    }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        dontFlipTimer = 0;
+    }
+
+    private void Flip(Collision2D collision)
+    {
         bool flip = false;
         for (int i = 0; i < collision.contactCount; i++)
         {
@@ -41,12 +61,7 @@ public class MovingBlock : MonoBehaviour
             currentScale.x *= -1;
             blockSprite.transform.localScale = currentScale;
             speed *= -1;
-            flipped = true;
+            dontFlipTimer = dontFlipTime;
         }
-    }
-
-    private void OnCollisionExit2D(Collision2D collision)
-    {
-        flipped = false;
     }
 }

@@ -1,6 +1,7 @@
 
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -10,9 +11,10 @@ public class PlayerController : MonoBehaviour
     private readonly int baseJumpForce = 4;
     private readonly int jumpMultiplier = 4;
     private readonly int additionalJumpForce = 9;
+    private readonly float speedIncrease = 2f;
     private readonly float coyoteTime = .2f;
     private readonly float jumpBufferTime = .2f;
-    private readonly float reboundBufferTime = .2f;
+    private readonly float reboundBufferTime = .4f;
     private readonly float scaleChangeTime = .25f;
     private readonly float baseGravity = 2f;
     private readonly float groundPoundGravity = 8f;
@@ -23,6 +25,8 @@ public class PlayerController : MonoBehaviour
     private readonly float maxParticleSize = .5f;
     private readonly float slowFactor = .05f;
     private readonly float slowDuration = .5f;
+    private readonly float baseDrag = 1.2f;
+    private float drag = 1.2f;
     private float speed = 6f;
     private float horizontalInput = 0;
     private bool grounded = false;
@@ -32,7 +36,8 @@ public class PlayerController : MonoBehaviour
     private float jumpBufferCounter = 0;
     private float reboundBufferCounter = 0;
     private float landingVelocity = 0;
-    private Vector3 currentVelocity = Vector3.zero;
+    private Vector2 currentVelocity = Vector3.zero;
+    private Vector2 additionalVelocity = Vector3.zero;
     private Vector3 smoothScaleChange = Vector3.zero;
     [SerializeField] private Animator animator;
     [SerializeField] private AudioSource audioSource;
@@ -174,11 +179,26 @@ public class PlayerController : MonoBehaviour
         jump = false;
     }
 
+    public void AddVelocity(Vector2 newVelocity)
+    {
+        playerRB.velocity = new Vector2(playerRB.velocity.x, playerRB.velocity.y + newVelocity.y);
+        additionalVelocity = new Vector2(newVelocity.x, 0);
+    }
+
     private void Move(float xSpeed)
     {
         Vector3 targetVelocity = new Vector2(xSpeed * 60f, playerRB.velocity.y);
-        // And then smoothing it out and applying it to the character
-        playerRB.velocity = Vector3.SmoothDamp(playerRB.velocity, targetVelocity, ref currentVelocity, 0);
+        playerRB.velocity = Vector2.SmoothDamp(playerRB.velocity, targetVelocity, ref currentVelocity, 0) + additionalVelocity;
+        if (additionalVelocity.x > 0)
+        {
+            additionalVelocity.x -= additionalVelocity.x * drag * Time.deltaTime;
+            drag += Time.deltaTime;
+        }
+        else
+        {
+            additionalVelocity = Vector2.zero;
+            drag = baseDrag;
+        }
     }
 
     private void UpdateScale()
@@ -192,13 +212,14 @@ public class PlayerController : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         bool brokeBlock = false;
-        if ((groundPounding || rebounding) && collision.collider.tag == "Breakable")
+        if ((groundPounding || rebounding || additionalVelocity.x > 0.1f) && collision.collider.tag == "Breakable")
         {
             brokeBlock = PerformBreakLogic(collision);
         }
 
         if (!brokeBlock)
         {
+            additionalVelocity = Vector2.zero;
             CheckGrounding(collision);
         }
     }
@@ -275,6 +296,7 @@ public class PlayerController : MonoBehaviour
     public void IncreaseGrowLogic()
     {
         Scale = 1 * (DataManager.GrowCount + 1);
+        speed += speedIncrease;
         currentJumpForce = baseJumpForce + jumpMultiplier * DataManager.GrowCount;
     }
 
@@ -298,7 +320,7 @@ public class PlayerController : MonoBehaviour
         groundPounding = true;
         playerRB.gravityScale = groundPoundGravity;
         horizontalInput = 0;
-        playerRB.velocity = new Vector2(0, playerRB.velocity.y);
+        playerRB.velocity = new Vector2(0, playerRB.velocity.y * (playerRB.velocity.y > 0 ? -1 : 1));
         playerRB.AddForce(Vector3.down * (additionalJumpForce + Scale*poundForceScale), ForceMode2D.Impulse);
         poundTrail.startWidth = Scale;
         poundTrail.emitting = true;
