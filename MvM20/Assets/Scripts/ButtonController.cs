@@ -14,7 +14,7 @@ public class ButtonController : MonoBehaviour
         if (collision.gameObject.tag == "Player")
         {
             PlayerController pc = collision.gameObject.GetComponent<PlayerController>();
-            if (pc.groundPounding || pc.rebounding)
+            if (pc.groundPounding || pc.groundPoundLanded || pc.rebounding)
             {
                 animator.SetTrigger("Pressed");
             }
