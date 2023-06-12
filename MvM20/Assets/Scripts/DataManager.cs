@@ -4,13 +4,20 @@ using UnityEngine;
 
 public class DataManager : MonoBehaviour
 {
+    [SerializeField] GameObject HUD;
+    [SerializeField] GameObject StartScreen;
+    [SerializeField] GameObject EndScreen;
+    [SerializeField] GameObject Tips;
     [SerializeField] PlayerController playerController;
     [SerializeField] GrowCounterUX growCounterUX;
+    [SerializeField] SizeIndicatorUX sizeIndicatorUX;
+    [SerializeField] TipUxManager tipManager;
 
     public static DataManager Instance { get; private set; }
     public static int GrowCount { get; private set; } = 0;
     public static int GrowPowerUps { get; private set; } = 0;
     public static int NextThreshold { get; private set; } = 2;
+    public static bool GameStarted { get; private set; } = false;
 
     // Start is called before the first frame update
     void Start()
@@ -25,14 +32,33 @@ public class DataManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         growCounterUX.SetMaxGrow(NextThreshold);
+        growCounterUX.sliderFull.AddListener(() => { Instance.HitThreshhold(); });
+        StartScreen.SetActive(true);
     }
 
     public void IncreaseGrowPowerUps()
     {
         GrowPowerUps += 1;
         growCounterUX.SetGrowCounter(GrowPowerUps);
-        if (GrowPowerUps == NextThreshold)
-            HitThreshhold();
+    }
+
+    public void StartGame()
+    {
+        GameStarted = true;
+        StartScreen.SetActive(false);
+        HUD.SetActive(true);
+    }
+
+    public void ShowGroundPoundTip()
+    {
+        Tips.SetActive(true);
+        tipManager.ShowGroundPoundTip();
+    }
+
+    public void ShowReboundTip()
+    {
+        Tips.SetActive(true);
+        tipManager.ShowReboundTip();
     }
 
     private void HitThreshhold()
@@ -40,8 +66,8 @@ public class DataManager : MonoBehaviour
         GrowCount++;
         NextThreshold *= 2;
         GrowPowerUps = 0;
-        growCounterUX.SetGrowCounter(GrowPowerUps);
         growCounterUX.SetMaxGrow(NextThreshold);
+        sizeIndicatorUX.AddSizeIndicator();
         playerController.IncreaseGrowLogic();
     }
 }

@@ -31,6 +31,7 @@ public class PlayerController : MonoBehaviour
     private readonly float baseMass = 1f;
     private readonly float cannonMass = 20f;
     private readonly float cannonGravity = 20f;
+    private readonly float maxVelocity = 50f;
     private float speed = 6f;
     private float horizontalInput = 0;
     private bool grounded = false;
@@ -45,12 +46,19 @@ public class PlayerController : MonoBehaviour
     private Vector2 currentVelocity = Vector3.zero;
     private Vector2 additionalVelocity = Vector3.zero;
     private Vector3 smoothScaleChange = Vector3.zero;
+    [SerializeField] private Transform groundCheck;
     [SerializeField] private Animator animator;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private Rigidbody2D playerRB;
     [SerializeField] private TrailRenderer poundTrail;
     [SerializeField] private ParticleSystem particles;
     [SerializeField] private TimeManager timeManager;
+    [SerializeField] private AudioClip jumpClip;
+    [SerializeField] private AudioClip landClip;
+    [SerializeField] private AudioClip poundClip;
+    [SerializeField] private AudioClip reboundClip;
+    [SerializeField] private AudioClip collectClip;
+    [SerializeField] private LayerMask groundLayers;
     private StickyObject sticky;
     public UnityEvent triggerScreenShake = new UnityEvent();
     public bool groundPounding { get; private set; } = false;
@@ -95,7 +103,7 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (isDead)
+        if (isDead || !DataManager.GameStarted)
             return;
 
         horizontalInput = groundPounding ? 0 : Input.GetAxisRaw("Horizontal");
@@ -160,7 +168,7 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (isDead)
+        if (isDead || !DataManager.GameStarted)
             return;
 
         UpdateScale();
@@ -185,8 +193,9 @@ public class PlayerController : MonoBehaviour
         }
 
         // animator.SetTrigger("jump");
+        audioSource.clip = jumpClip;
+        PlaySound();
         playerRB.AddForce(Vector3.up * (grounded ? currentJumpForce : additionalJumpForce), ForceMode2D.Impulse);
-
         jump = false;
     }
 
@@ -235,7 +244,7 @@ public class PlayerController : MonoBehaviour
         {
             if (!isInCannon && isCannoning)
             {
-                EndCannon();
+                SlowCannon();
                 triggerScreenShake.Invoke();
             }
 
@@ -267,7 +276,14 @@ public class PlayerController : MonoBehaviour
             // animator.ResetTrigger("jump");
             Jumps = 0;
             landingVelocity = collision.relativeVelocity.y;
+            if (landingVelocity > 0f)
+            {
+                audioSource.clip = landClip;
+                PlaySound();
+            }
+
             EndGroundPount();
+            EndCannon();
         }
     }
 
@@ -322,16 +338,24 @@ public class PlayerController : MonoBehaviour
     public void GrabGrowPowerUp()
     {
         DataManager.Instance.IncreaseGrowPowerUps();
+        audioSource.clip = collectClip;
+        PlaySound();
     }
 
     private void GetGroundPoundLogic()
     {
         HasPound = true;
+        DataManager.Instance.ShowGroundPoundTip();
+        audioSource.clip = collectClip;
+        PlaySound();
     }
 
     private void GetReboundLogic()
     {
         HasRebound = true;
+        DataManager.Instance.ShowReboundTip();
+        audioSource.clip = collectClip;
+        PlaySound();
     }
 
     private void StartGroundPound()
@@ -356,6 +380,8 @@ public class PlayerController : MonoBehaviour
         playerRB.AddForce(Vector3.up * newForce, ForceMode2D.Impulse);
         poundTrail.startWidth = Scale;
         poundTrail.emitting = true;
+        audioSource.clip = reboundClip;
+        PlaySound();
     }
 
     private void EndRebound()
@@ -383,6 +409,8 @@ public class PlayerController : MonoBehaviour
             particleMain.startSpeed = startSpeed;
             particleMain.startSize = startSize;
             particles.Play();
+            audioSource.clip = poundClip;
+            PlaySound();
             if (HasRebound)
             {
                 reboundBufferCounter = reboundBufferTime;
@@ -420,9 +448,16 @@ public class PlayerController : MonoBehaviour
             additionalVelocity = Vector2.zero;
             playerRB.gravityScale = baseGravity;
             playerRB.mass = baseMass;
-            playerRB.velocity = Vector2.ClampMagnitude(playerRB.velocity, currentJumpForce);
             poundTrail.emitting = false;
             isCannoning = false;
+        }
+    }
+
+    public void SlowCannon()
+    {
+        if (isCannoning)
+        {
+            additionalVelocity *= .5f;
         }
     }
 
@@ -440,5 +475,11 @@ public class PlayerController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void PlaySound()
+    {
+        if (DataManager.GameStarted)
+            audioSource.Play();
     }
 }

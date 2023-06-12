@@ -8,6 +8,7 @@ public class ButtonController : MonoBehaviour
     public UnityEvent OpenDoor = new UnityEvent();
 
     [SerializeField] private Animator animator;
+    [SerializeField] private AudioSource audioSource;
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -27,6 +28,7 @@ public class ButtonController : MonoBehaviour
 
     private void ButtonPressed()
     {
+        audioSource.Play();
         OpenDoor.Invoke();
     }
 }
