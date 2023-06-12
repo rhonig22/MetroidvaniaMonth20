@@ -5,7 +5,8 @@ using UnityEngine;
 public class CanonController : MonoBehaviour
 {
     private readonly float canonForce = 25f;
-    private readonly float fireBufferTime = .25f;
+    private readonly float fireBufferTime = .2f;
+    private readonly float centerMargin = .5f;
     private Vector3 playerPos = Vector3.zero;
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -21,7 +22,7 @@ public class CanonController : MonoBehaviour
         if (collision.gameObject.tag == "Player")
         {
             GameObject player = collision.gameObject;
-            if (Mathf.Abs((player.transform.position - transform.position).magnitude) < .3f)
+            if (Mathf.Abs((player.transform.position - transform.position).magnitude) < centerMargin)
             {
                 PlayerController pc = player.GetComponent<PlayerController>();
                 pc.FireCannon(GetCannonForce());

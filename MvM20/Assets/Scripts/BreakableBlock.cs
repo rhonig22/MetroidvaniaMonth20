@@ -14,6 +14,7 @@ public class BreakableBlock : MonoBehaviour
     [SerializeField] private Rigidbody2D blockRb;
     [SerializeField] private BoxCollider2D blockCollider;
     [SerializeField] private SpriteRenderer sprite;
+    [SerializeField] private AudioSource audioSource;
     private List<GameObject> counters = new List<GameObject>();
     private readonly float minParticleSpeed = 5f;
     private readonly float maxParticleSpeed = 10f;
@@ -75,6 +76,7 @@ public class BreakableBlock : MonoBehaviour
         particleMain.startSpeed = startSpeed;
         particleMain.startSize = startSize;
         particles.Play();
+        audioSource.Play();
         animator.SetTrigger("Break");
     }
 
