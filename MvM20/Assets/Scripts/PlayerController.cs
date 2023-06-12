@@ -25,12 +25,18 @@ public class PlayerController : MonoBehaviour
     private readonly float maxParticleSize = .5f;
     private readonly float slowFactor = .05f;
     private readonly float slowDuration = .5f;
+    private readonly float smoothTime = .1f;
+    private readonly float cannonSmoothTime = 1f;
     private readonly float baseDrag = 1.2f;
-    private float drag = 1.2f;
+    private readonly float baseMass = 1f;
+    private readonly float cannonMass = 20f;
+    private readonly float cannonGravity = 20f;
     private float speed = 6f;
     private float horizontalInput = 0;
     private bool grounded = false;
     private bool jump = false;
+    private bool isInCannon = false;
+    private bool isCannoning = false;
     private int currentJumpForce;
     private float coyoteTimeCounter = 0;
     private float jumpBufferCounter = 0;
@@ -48,6 +54,7 @@ public class PlayerController : MonoBehaviour
     private StickyObject sticky;
     public UnityEvent triggerScreenShake = new UnityEvent();
     public bool groundPounding { get; private set; } = false;
+    public bool groundPoundLanded { get; private set; } = false;
     public bool rebounding { get; private set; } = false;
     public bool isDead { get; private set; } = false;
     public bool HasPound { get; private set; } = false;
@@ -92,6 +99,7 @@ public class PlayerController : MonoBehaviour
             return;
 
         horizontalInput = groundPounding ? 0 : Input.GetAxisRaw("Horizontal");
+        groundPoundLanded = false;
 
         // Coyote Time Logic
         if (grounded)
@@ -139,6 +147,11 @@ public class PlayerController : MonoBehaviour
             EndRebound();
         }
 
+        if (isCannoning && additionalVelocity.magnitude < 1f && playerRB.velocity.y <= 0f)
+        {
+            EndCannon();
+        }
+
         if (HasPound && !grounded && Input.GetButtonDown("Pound"))
         {
             StartGroundPound();
@@ -158,8 +171,6 @@ public class PlayerController : MonoBehaviour
         {
             StartJump();
         }
-
-        playerRB.velocity = playerRB.velocity + sticky.AdditionalVelocity;
     }
 
     private void StartJump()
@@ -179,25 +190,28 @@ public class PlayerController : MonoBehaviour
         jump = false;
     }
 
-    public void AddVelocity(Vector2 newVelocity)
+    private void AddVelocity(Vector2 newVelocity)
     {
-        playerRB.velocity = new Vector2(playerRB.velocity.x, playerRB.velocity.y + newVelocity.y);
-        additionalVelocity = new Vector2(newVelocity.x, 0);
+        playerRB.velocity += newVelocity;
+        newVelocity.y = 0;
+        additionalVelocity = newVelocity;
     }
 
     private void Move(float xSpeed)
     {
-        Vector3 targetVelocity = new Vector2(xSpeed * 60f, playerRB.velocity.y);
-        playerRB.velocity = Vector2.SmoothDamp(playerRB.velocity, targetVelocity, ref currentVelocity, 0) + additionalVelocity;
-        if (additionalVelocity.x > 0)
+        Vector2 targetVelocity = new Vector2(xSpeed * 60f, playerRB.velocity.y);
+        playerRB.velocity = Vector2.SmoothDamp(playerRB.velocity, targetVelocity + additionalVelocity + sticky.AdditionalVelocity, ref currentVelocity, additionalVelocity.magnitude > 0 ? cannonSmoothTime : smoothTime);
+
+        if (isCannoning)
         {
-            additionalVelocity.x -= additionalVelocity.x * drag * Time.deltaTime;
-            drag += Time.deltaTime;
-        }
-        else
-        {
-            additionalVelocity = Vector2.zero;
-            drag = baseDrag;
+            bool stillCannon = additionalVelocity.magnitude < 1f;
+            if (additionalVelocity.magnitude > 0 && !isInCannon)
+                additionalVelocity.x -= additionalVelocity.x * baseDrag * Time.deltaTime;
+
+            if (!stillCannon && additionalVelocity.magnitude < 1f)
+            {
+                EndCannon();
+            }
         }
     }
 
@@ -212,14 +226,19 @@ public class PlayerController : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         bool brokeBlock = false;
-        if ((groundPounding || rebounding || additionalVelocity.x > 0.1f) && collision.collider.tag == "Breakable")
+        if ((groundPounding || rebounding || additionalVelocity.magnitude > 0f) && collision.collider.tag == "Breakable")
         {
             brokeBlock = PerformBreakLogic(collision);
         }
 
         if (!brokeBlock)
         {
-            additionalVelocity = Vector2.zero;
+            if (!isInCannon && isCannoning)
+            {
+                EndCannon();
+                triggerScreenShake.Invoke();
+            }
+
             CheckGrounding(collision);
         }
     }
@@ -317,6 +336,9 @@ public class PlayerController : MonoBehaviour
 
     private void StartGroundPound()
     {
+        if (rebounding)
+            EndRebound();
+
         groundPounding = true;
         playerRB.gravityScale = groundPoundGravity;
         horizontalInput = 0;
@@ -348,6 +370,7 @@ public class PlayerController : MonoBehaviour
         {
             playerRB.gravityScale = baseGravity;
             groundPounding = false;
+            groundPoundLanded = true;
             triggerScreenShake.Invoke();
             poundTrail.emitting = false;
             var particleMain = particles.main;
@@ -364,6 +387,42 @@ public class PlayerController : MonoBehaviour
             {
                 reboundBufferCounter = reboundBufferTime;
             }
+        }
+    }
+
+    public void EnterCannon()
+    {
+        playerRB.velocity = Vector2.zero;
+        currentVelocity = Vector2.zero;
+        isInCannon= true;
+        playerRB.gravityScale = 0;
+    }
+
+    public void FireCannon(Vector2 newVelocity)
+    {
+        AddVelocity(newVelocity);
+    }
+
+    public void LeaveCannon(Vector2 newVelocity)
+    {
+        AddVelocity(newVelocity);
+        playerRB.gravityScale = cannonGravity;
+        playerRB.mass = cannonMass;
+        isInCannon = false;
+        poundTrail.emitting = true;
+        isCannoning = true;
+    }
+
+    public void EndCannon()
+    {
+        if (isCannoning)
+        {
+            additionalVelocity = Vector2.zero;
+            playerRB.gravityScale = baseGravity;
+            playerRB.mass = baseMass;
+            playerRB.velocity = Vector2.ClampMagnitude(playerRB.velocity, currentJumpForce);
+            poundTrail.emitting = false;
+            isCannoning = false;
         }
     }
 

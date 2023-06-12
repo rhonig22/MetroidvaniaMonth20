@@ -13,7 +13,7 @@ public class CameraController : MonoBehaviour
     private readonly float minZoom = 0;
     private readonly float maxZoom = 10;
     private readonly float zoomSmoothTime = .25f;
-    private readonly float shakeAmplitude = .5f;
+    private readonly float shakeAmplitude = 1f;
     private readonly float shakeFrequency = 2f;
     private readonly float shakeTime = .25f;
     private float shakeTimeElapsed = 0;
