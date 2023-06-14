@@ -1,4 +1,5 @@
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
@@ -31,7 +32,13 @@ public class PlayerController : MonoBehaviour
     private readonly float baseMass = 1f;
     private readonly float cannonMass = 20f;
     private readonly float cannonGravity = 20f;
-    private readonly float maxVelocity = 50f;
+    private readonly float zoomLeft1xVal = -55.8f;
+    private readonly float zoomLeft1Orth = 17f;
+    private readonly float zoomRight1xVal = 48.7f;
+    private readonly float zoomRight1Orth = 19f;
+    private readonly float zoomBotxVal = 6.5f;
+    private readonly float zoomBotyVal = -50.5f;
+    private readonly float zoomBotOrth = 25f;
     private float speed = 6f;
     private float horizontalInput = 0;
     private bool grounded = false;
@@ -43,9 +50,11 @@ public class PlayerController : MonoBehaviour
     private float jumpBufferCounter = 0;
     private float reboundBufferCounter = 0;
     private float landingVelocity = 0;
+    private float triggerAreaSideValue = 0;
     private Vector2 currentVelocity = Vector3.zero;
     private Vector2 additionalVelocity = Vector3.zero;
     private Vector3 smoothScaleChange = Vector3.zero;
+    private List<AudioClip> audioQueue = new List<AudioClip>();
     [SerializeField] private Transform groundCheck;
     [SerializeField] private Animator animator;
     [SerializeField] private AudioSource audioSource;
@@ -54,13 +63,15 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private ParticleSystem particles;
     [SerializeField] private TimeManager timeManager;
     [SerializeField] private AudioClip jumpClip;
-    [SerializeField] private AudioClip landClip;
     [SerializeField] private AudioClip poundClip;
     [SerializeField] private AudioClip reboundClip;
     [SerializeField] private AudioClip collectClip;
     [SerializeField] private LayerMask groundLayers;
     private StickyObject sticky;
     public UnityEvent triggerScreenShake = new UnityEvent();
+    public UnityEvent<float, float, float> enterZoomedCamX = new UnityEvent<float, float, float>();
+    public UnityEvent<float, float, float> enterZoomedCamY = new UnityEvent<float, float, float>();
+    public UnityEvent returnToFollow = new UnityEvent();
     public bool groundPounding { get; private set; } = false;
     public bool groundPoundLanded { get; private set; } = false;
     public bool rebounding { get; private set; } = false;
@@ -171,6 +182,7 @@ public class PlayerController : MonoBehaviour
         if (isDead || !DataManager.GameStarted)
             return;
 
+        PlaySoundQueue();
         UpdateScale();
         Move(horizontalInput * speed * Time.fixedDeltaTime);
 
@@ -193,8 +205,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // animator.SetTrigger("jump");
-        audioSource.clip = jumpClip;
-        PlaySound();
+        PlaySound(jumpClip);
         playerRB.AddForce(Vector3.up * (grounded ? currentJumpForce : additionalJumpForce), ForceMode2D.Impulse);
         jump = false;
     }
@@ -276,12 +287,6 @@ public class PlayerController : MonoBehaviour
             // animator.ResetTrigger("jump");
             Jumps = 0;
             landingVelocity = collision.relativeVelocity.y;
-            if (landingVelocity > 0f)
-            {
-                audioSource.clip = landClip;
-                PlaySound();
-            }
-
             EndGroundPount();
             EndCannon();
         }
@@ -318,6 +323,15 @@ public class PlayerController : MonoBehaviour
                 GetReboundLogic();
                 destroyCollision = true;
                 break;
+            case "LeftZoom":
+                EnterLeftZoomTrigger();
+                break;
+            case "RightZoom":
+                EnterRightZoomTrigger();
+                break;
+            case "EndGame":
+                StartCoroutine(EndGame());
+                break;
             default:
                 break;
         }
@@ -325,6 +339,30 @@ public class PlayerController : MonoBehaviour
         if (destroyCollision)
         {
             Destroy(collision.gameObject);
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (isDead)
+            return;
+
+        switch (collision.tag)
+        {
+            case "LeftZoom":
+                ExitLeftZoomTrigger();
+                break;
+            case "RightZoom":
+                ExitRightZoomTrigger();
+                break;
+            case "BottomZoom":
+                ExitBottomZoomTrigger();
+                break;
+            case "EndFollow":
+                EndFollowTrigger();
+                break;
+            default:
+                break;
         }
     }
 
@@ -338,24 +376,21 @@ public class PlayerController : MonoBehaviour
     public void GrabGrowPowerUp()
     {
         DataManager.Instance.IncreaseGrowPowerUps();
-        audioSource.clip = collectClip;
-        PlaySound();
+        PlaySound(collectClip);
     }
 
     private void GetGroundPoundLogic()
     {
         HasPound = true;
         DataManager.Instance.ShowGroundPoundTip();
-        audioSource.clip = collectClip;
-        PlaySound();
+        PlaySound(collectClip);
     }
 
     private void GetReboundLogic()
     {
         HasRebound = true;
         DataManager.Instance.ShowReboundTip();
-        audioSource.clip = collectClip;
-        PlaySound();
+        PlaySound(collectClip);
     }
 
     private void StartGroundPound()
@@ -380,8 +415,7 @@ public class PlayerController : MonoBehaviour
         playerRB.AddForce(Vector3.up * newForce, ForceMode2D.Impulse);
         poundTrail.startWidth = Scale;
         poundTrail.emitting = true;
-        audioSource.clip = reboundClip;
-        PlaySound();
+        PlaySound(reboundClip);
     }
 
     private void EndRebound()
@@ -409,8 +443,7 @@ public class PlayerController : MonoBehaviour
             particleMain.startSpeed = startSpeed;
             particleMain.startSize = startSize;
             particles.Play();
-            audioSource.clip = poundClip;
-            PlaySound();
+            PlaySound(poundClip);
             if (HasRebound)
             {
                 reboundBufferCounter = reboundBufferTime;
@@ -477,9 +510,77 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
-    private void PlaySound()
+    private void PlaySound(AudioClip clip)
     {
         if (DataManager.GameStarted)
-            audioSource.Play();
+        {
+            if (!audioSource.isPlaying)
+            {
+                audioSource.clip = clip;
+                audioSource.Play();
+            }
+            else
+            {
+                audioQueue.Add(clip);
+            }
+        }
+    }
+
+    private void PlaySoundQueue()
+    {
+        if (DataManager.GameStarted)
+        {
+            if (!audioSource.isPlaying && audioQueue.Count > 0)
+            {
+                audioSource.clip = audioQueue[0];
+                audioSource.Play();
+                audioQueue.RemoveAt(0);
+            }
+        }
+    }
+
+    private void EnterLeftZoomTrigger()
+    {
+        triggerAreaSideValue = transform.position.x;
+    }
+
+    private void ExitLeftZoomTrigger()
+    {
+        if (transform.position.x < triggerAreaSideValue)
+            enterZoomedCamY.Invoke(zoomLeft1xVal, transform.position.y, zoomLeft1Orth);
+        else
+            returnToFollow.Invoke();
+
+        triggerAreaSideValue = 0;
+    }
+
+    private void EnterRightZoomTrigger()
+    {
+        triggerAreaSideValue = transform.position.y;
+    }
+
+    private void ExitRightZoomTrigger()
+    {
+        if (transform.position.y > triggerAreaSideValue)
+            enterZoomedCamY.Invoke(zoomRight1xVal, transform.position.y, zoomRight1Orth);
+        else
+            returnToFollow.Invoke();
+
+        triggerAreaSideValue = 0;
+    }
+
+    private void ExitBottomZoomTrigger()
+    {
+        enterZoomedCamX.Invoke(zoomBotxVal, zoomBotyVal, zoomBotOrth);
+    }
+
+    private void EndFollowTrigger()
+    {
+        returnToFollow.Invoke();
+    }
+
+    private IEnumerator EndGame()
+    {
+        yield return new WaitForSeconds(1f);
     }
 }
