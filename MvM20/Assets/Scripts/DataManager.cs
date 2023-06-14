@@ -49,6 +49,13 @@ public class DataManager : MonoBehaviour
         HUD.SetActive(true);
     }
 
+    public void EndGame()
+    {
+        GameStarted = true;
+        EndScreen.SetActive(true);
+        HUD.SetActive(false);
+    }
+
     public void ShowGroundPoundTip()
     {
         Tips.SetActive(true);

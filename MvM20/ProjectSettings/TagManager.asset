@@ -9,6 +9,11 @@ TagManager:
   - GroundPound
   - Rebound
   - Moving
+  - LeftZoom
+  - RightZoom
+  - BottomZoom
+  - EndFollow
+  - EndGame
   layers:
   - Default
   - TransparentFX

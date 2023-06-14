@@ -38,7 +38,7 @@ Transform:
   - {fileID: 3267999251837240193}
   - {fileID: 8924057668314396534}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &4664482337569722639
 SpriteRenderer:
@@ -111,15 +111,20 @@ MonoBehaviour:
   poundTrail: {fileID: 27849264105255306}
   particles: {fileID: 7582009079197523232}
   timeManager: {fileID: 0}
-  jumpClip: {fileID: 0}
-  landClip: {fileID: 8300000, guid: b5423abcf32ac004eac9483fde35eebb, type: 3}
+  jumpClip: {fileID: 8300000, guid: e3629075cfc02284192e8081b4802b3d, type: 3}
   poundClip: {fileID: 8300000, guid: 3e4a400d651679445a72807e18e3e64a, type: 3}
-  reboundClip: {fileID: 8300000, guid: c67823252ea84334f86d6d5982c556ff, type: 3}
+  reboundClip: {fileID: 8300000, guid: 1edeca66a1c5eb943a55dc69fdeeedbd, type: 3}
   collectClip: {fileID: 8300000, guid: 1ff4af90f80a6b245ae44746658ea621, type: 3}
   groundLayers:
     serializedVersion: 2
     m_Bits: 1
   triggerScreenShake:
+    m_PersistentCalls:
+      m_Calls: []
+  enterLeftZoom:
+    m_PersistentCalls:
+      m_Calls: []
+  returnToFollow:
     m_PersistentCalls:
       m_Calls: []
 --- !u!50 &2426114947976849712
