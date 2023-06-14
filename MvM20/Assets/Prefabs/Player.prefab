@@ -118,10 +118,14 @@ MonoBehaviour:
   groundLayers:
     serializedVersion: 2
     m_Bits: 1
+  musicPlayer: {fileID: 0}
   triggerScreenShake:
     m_PersistentCalls:
       m_Calls: []
-  enterLeftZoom:
+  enterZoomedCamX:
+    m_PersistentCalls:
+      m_Calls: []
+  enterZoomedCamY:
     m_PersistentCalls:
       m_Calls: []
   returnToFollow:
@@ -327,7 +331,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 5553ac829d7ffa746a91d22861992a8d, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 1
+  m_Volume: 0.8
   m_Pitch: 1
   Loop: 0
   Mute: 0

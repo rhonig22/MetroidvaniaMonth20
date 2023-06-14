@@ -5,6 +5,8 @@ using UnityEngine;
 public class CanonController : MonoBehaviour
 {
     [SerializeField] private Transform launchPos;
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private ParticleSystem particles;
     private readonly float canonForce = 25f;
     private readonly float fireBufferTime = .2f;
     private readonly float centerMargin = 2f;
@@ -45,6 +47,9 @@ public class CanonController : MonoBehaviour
         {
             PlayerController pc = collision.gameObject.GetComponent<PlayerController>();
             pc.LeaveCannon(GetCannonForce());
+            audioSource.Play();
+            particles.transform.localScale = transform.localScale;
+            particles.Play();
             playerPos = Vector3.zero;
             hasShot= false;
         }

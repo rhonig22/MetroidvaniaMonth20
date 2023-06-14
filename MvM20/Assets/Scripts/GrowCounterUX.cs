@@ -7,18 +7,22 @@ using UnityEngine.UI;
 public class GrowCounterUX : MonoBehaviour
 {
     [SerializeField] Slider GrowCounter;
-    private List<float> newCountValues = new List<float>();
     private readonly float changeTime = .1f;
+    private float timeCount = 0;
+    private float initialValue = 0;
+    private List<float> newCountValues = new List<float>();
     public UnityEvent sliderFull = new UnityEvent();
 
     private void Update()
     {
         if (newCountValues.Count > 0)
         {
-            GrowCounter.value = Mathf.Lerp(GrowCounter.value, newCountValues[0], changeTime);
-            if (newCountValues[0] - GrowCounter.value <= .05f)
+            GrowCounter.value = Mathf.Lerp(initialValue, newCountValues[0], timeCount);
+            timeCount += Time.deltaTime / changeTime;
+            if (newCountValues[0] == GrowCounter.value)
             {
-                GrowCounter.value = newCountValues[0];
+                initialValue = GrowCounter.value;
+                timeCount= 0;
                 newCountValues.RemoveAt(0);
             }
         }
@@ -31,6 +35,7 @@ public class GrowCounterUX : MonoBehaviour
     public void SetMaxGrow(float max)
     {
         GrowCounter.value = 0;
+        initialValue = 0;
         GrowCounter.maxValue = max;
     }
 

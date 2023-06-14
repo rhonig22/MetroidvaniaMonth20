@@ -39,6 +39,7 @@ public class PlayerController : MonoBehaviour
     private readonly float zoomBotxVal = 6.5f;
     private readonly float zoomBotyVal = -50.5f;
     private readonly float zoomBotOrth = 25f;
+    private readonly float endingZoomLevelStart = 16f;
     private float speed = 6f;
     private float horizontalInput = 0;
     private bool grounded = false;
@@ -67,11 +68,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private AudioClip reboundClip;
     [SerializeField] private AudioClip collectClip;
     [SerializeField] private LayerMask groundLayers;
+    [SerializeField] private MusicPlayer musicPlayer;
     private StickyObject sticky;
     public UnityEvent triggerScreenShake = new UnityEvent();
     public UnityEvent<float, float, float> enterZoomedCamX = new UnityEvent<float, float, float>();
     public UnityEvent<float, float, float> enterZoomedCamY = new UnityEvent<float, float, float>();
-    public UnityEvent returnToFollow = new UnityEvent();
+    public UnityEvent<bool, float> returnToFollow = new UnityEvent<bool, float>();
     public bool groundPounding { get; private set; } = false;
     public bool groundPoundLanded { get; private set; } = false;
     public bool rebounding { get; private set; } = false;
@@ -166,7 +168,7 @@ public class PlayerController : MonoBehaviour
             EndRebound();
         }
 
-        if (isCannoning && additionalVelocity.magnitude < 1f && playerRB.velocity.y <= 0f)
+        if (isCannoning && additionalVelocity.magnitude < speed && playerRB.velocity.y <= 0f)
         {
             EndCannon();
         }
@@ -287,7 +289,7 @@ public class PlayerController : MonoBehaviour
             // animator.ResetTrigger("jump");
             Jumps = 0;
             landingVelocity = collision.relativeVelocity.y;
-            EndGroundPount();
+            EndGroundPound();
             EndCannon();
         }
     }
@@ -332,6 +334,18 @@ public class PlayerController : MonoBehaviour
             case "EndGame":
                 StartCoroutine(EndGame());
                 break;
+            case "Ruins":
+                musicPlayer.ChangeMusic(musicPlayer.ruins);
+                break;
+            case "Cave":
+                musicPlayer.ChangeMusic(musicPlayer.cave);
+                break;
+            case "Air":
+                musicPlayer.ChangeMusic(musicPlayer.air);
+                break;
+            case "Finale":
+                musicPlayer.ChangeMusic(musicPlayer.finale);
+                break;
             default:
                 break;
         }
@@ -360,6 +374,9 @@ public class PlayerController : MonoBehaviour
                 break;
             case "EndFollow":
                 EndFollowTrigger();
+                break;
+            case "EndZoomIn":
+                EndFollowTriggerZoomIn();
                 break;
             default:
                 break;
@@ -424,7 +441,7 @@ public class PlayerController : MonoBehaviour
         poundTrail.emitting = false;
     }
 
-    private void EndGroundPount()
+    private void EndGroundPound()
     {
         if (groundPounding)
         {
@@ -433,6 +450,8 @@ public class PlayerController : MonoBehaviour
             groundPoundLanded = true;
             triggerScreenShake.Invoke();
             poundTrail.emitting = false;
+            particles.transform.SetParent(transform, false);
+            particles.transform.localPosition = new Vector3(0, -.5f, 0);
             var particleMain = particles.main;
             var startSpeed = particleMain.startSpeed;
             var startSize = particleMain.startSize;
@@ -442,6 +461,8 @@ public class PlayerController : MonoBehaviour
             startSize.constantMax = maxParticleSize * Scale;
             particleMain.startSpeed = startSpeed;
             particleMain.startSize = startSize;
+            particles.transform.SetParent(null, true);
+            particles.transform.localScale = new Vector3(Scale/2, Scale/2, Scale/2);
             particles.Play();
             PlaySound(poundClip);
             if (HasRebound)
@@ -453,6 +474,7 @@ public class PlayerController : MonoBehaviour
 
     public void EnterCannon()
     {
+        groundPounding = false;
         playerRB.velocity = Vector2.zero;
         currentVelocity = Vector2.zero;
         isInCannon= true;
@@ -549,7 +571,7 @@ public class PlayerController : MonoBehaviour
         if (transform.position.x < triggerAreaSideValue)
             enterZoomedCamY.Invoke(zoomLeft1xVal, transform.position.y, zoomLeft1Orth);
         else
-            returnToFollow.Invoke();
+            returnToFollow.Invoke(false, 0);
 
         triggerAreaSideValue = 0;
     }
@@ -564,7 +586,7 @@ public class PlayerController : MonoBehaviour
         if (transform.position.y > triggerAreaSideValue)
             enterZoomedCamY.Invoke(zoomRight1xVal, transform.position.y, zoomRight1Orth);
         else
-            returnToFollow.Invoke();
+            returnToFollow.Invoke(false, 0);
 
         triggerAreaSideValue = 0;
     }
@@ -576,11 +598,17 @@ public class PlayerController : MonoBehaviour
 
     private void EndFollowTrigger()
     {
-        returnToFollow.Invoke();
+        returnToFollow.Invoke(true, endingZoomLevelStart);
+    }
+
+    private void EndFollowTriggerZoomIn()
+    {
+        returnToFollow.Invoke(true, 0);
     }
 
     private IEnumerator EndGame()
     {
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(3f);
+        DataManager.Instance.EndGame();
     }
 }

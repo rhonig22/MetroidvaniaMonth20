@@ -14,8 +14,6 @@ public class CameraController : MonoBehaviour
     private CinemachineBasicMultiChannelPerlin zoomNoisePerlin;
     private readonly float orthoSize = 5;
     private readonly float shrinkSize = 5;
-    private readonly float minZoom = 0;
-    private readonly float maxZoom = 10;
     private readonly float zoomSmoothTime = .25f;
     private readonly float shakeAmplitude = 2f;
     private readonly float shakeFrequency = 2f;
@@ -27,6 +25,7 @@ public class CameraController : MonoBehaviour
     private float yVelocity = 0;
     private float xVelocity = 0;
     private float currentZoom = 0;
+    private float endZoom = 0;
     private bool isShaking = false;
     private bool isFollowCam = true;
     private bool isPanX = false;
@@ -39,7 +38,7 @@ public class CameraController : MonoBehaviour
         playerController.triggerScreenShake.AddListener(() => { ShakeCamera(); });
         playerController.enterZoomedCamX.AddListener((xVal, yVal, orth) => { StartZoomedCam(xVal, yVal, orth, true); });
         playerController.enterZoomedCamY.AddListener((xVal, yVal, orth) => { StartZoomedCam(xVal, yVal, orth, false); });
-        playerController.returnToFollow.AddListener(() => { StartFollowCam(); });
+        playerController.returnToFollow.AddListener((center, zoom) => { StartFollowCam(center, zoom); });
         followNoisePerlin = mainCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
         zoomNoisePerlin = zoomOutCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
     }
@@ -82,8 +81,10 @@ public class CameraController : MonoBehaviour
 
     private void ScaleCameraZoom()
     {
-        currentZoom = orthoSize + (DataManager.GrowCount < shrinkSize ? DataManager.GrowCount : 0);
-        currentZoom = Mathf.Clamp(currentZoom, minZoom, maxZoom);
+        if (endZoom > 0)
+            currentZoom = endZoom;
+        else
+            currentZoom = orthoSize + (DataManager.GrowCount < shrinkSize ? DataManager.GrowCount : 0);
         mainCamera.m_Lens.OrthographicSize = Mathf.SmoothDamp(mainCamera.m_Lens.OrthographicSize, currentZoom, ref zoomVelocity, zoomSmoothTime);
     }
 
@@ -110,12 +111,21 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    private void StartFollowCam()
+    private void StartFollowCam(bool center, float zoom)
     {
+        endZoom= zoom;
         if (!isFollowCam)
         {
             cameraAnimator.SetTrigger("Follow");
             isFollowCam = true;
+        }
+
+        if (center)
+        {
+            var componentBase = mainCamera.GetCinemachineComponent(CinemachineCore.Stage.Body) as CinemachineFramingTransposer;
+            componentBase.m_DeadZoneWidth = 0;
+            componentBase.m_XDamping = 0;
+            componentBase.m_LookaheadTime = 0;
         }
     }
 
