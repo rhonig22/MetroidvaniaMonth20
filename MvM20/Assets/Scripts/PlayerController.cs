@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
@@ -69,6 +70,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private AudioClip collectClip;
     [SerializeField] private LayerMask groundLayers;
     [SerializeField] private MusicPlayer musicPlayer;
+    [SerializeField] private Light2D light;
     private StickyObject sticky;
     public UnityEvent triggerScreenShake = new UnityEvent();
     public UnityEvent<float, float, float> enterZoomedCamX = new UnityEvent<float, float, float>();
@@ -388,6 +390,7 @@ public class PlayerController : MonoBehaviour
         Scale = 1 * (DataManager.GrowCount + 1);
         speed += speedIncrease;
         currentJumpForce = baseJumpForce + jumpMultiplier * DataManager.GrowCount;
+        light.pointLightOuterRadius = Scale + 1;
     }
 
     public void GrabGrowPowerUp()
