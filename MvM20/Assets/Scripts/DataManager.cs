@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class DataManager : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class DataManager : MonoBehaviour
     [SerializeField] GrowCounterUX growCounterUX;
     [SerializeField] SizeIndicatorUX sizeIndicatorUX;
     [SerializeField] TipUxManager tipManager;
+    [SerializeField] Animator creditsAnimator;
 
     public static DataManager Instance { get; private set; }
     public static int GrowCount { get; private set; } = 0;
@@ -23,14 +25,19 @@ public class DataManager : MonoBehaviour
     void Start()
     {
         // Set up singleton
-        if (Instance != null)
+        /*if (Instance != null)
         {
             Destroy(gameObject);
             return;
-        }
+        }*/
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        GrowCount = 0;
+        GrowPowerUps = 0;
+        NextThreshold = 2;
+        GameStarted = false;
+
+        // DontDestroyOnLoad(gameObject);
         growCounterUX.SetMaxGrow(NextThreshold);
         growCounterUX.sliderFull.AddListener(() => { Instance.HitThreshhold(); });
         StartScreen.SetActive(true);
@@ -54,6 +61,12 @@ public class DataManager : MonoBehaviour
         GameStarted = true;
         EndScreen.SetActive(true);
         HUD.SetActive(false);
+        creditsAnimator.SetTrigger("Credits");
+    }
+
+    public void RestartGame()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void ShowGroundPoundTip()

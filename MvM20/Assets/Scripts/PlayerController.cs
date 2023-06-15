@@ -70,7 +70,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private AudioClip collectClip;
     [SerializeField] private LayerMask groundLayers;
     [SerializeField] private MusicPlayer musicPlayer;
-    [SerializeField] private Light2D light;
+    [SerializeField] private Light2D lightSource;
     private StickyObject sticky;
     public UnityEvent triggerScreenShake = new UnityEvent();
     public UnityEvent<float, float, float> enterZoomedCamX = new UnityEvent<float, float, float>();
@@ -390,7 +390,7 @@ public class PlayerController : MonoBehaviour
         Scale = 1 * (DataManager.GrowCount + 1);
         speed += speedIncrease;
         currentJumpForce = baseJumpForce + jumpMultiplier * DataManager.GrowCount;
-        light.pointLightOuterRadius = Scale + 1;
+        lightSource.pointLightOuterRadius = Scale + 1;
     }
 
     public void GrabGrowPowerUp()
@@ -581,12 +581,12 @@ public class PlayerController : MonoBehaviour
 
     private void EnterRightZoomTrigger()
     {
-        triggerAreaSideValue = transform.position.y;
+        triggerAreaSideValue = transform.position.x;
     }
 
     private void ExitRightZoomTrigger()
     {
-        if (transform.position.y > triggerAreaSideValue)
+        if (transform.position.x < triggerAreaSideValue)
             enterZoomedCamY.Invoke(zoomRight1xVal, transform.position.y, zoomRight1Orth);
         else
             returnToFollow.Invoke(false, 0);
@@ -611,7 +611,7 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator EndGame()
     {
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(5f);
         DataManager.Instance.EndGame();
     }
 }
