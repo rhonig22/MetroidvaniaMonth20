@@ -244,6 +244,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2152848523384959343}
   - component: {fileID: 7297156289476677430}
+  - component: {fileID: 5280287970829376564}
   m_Layer: 0
   m_Name: Square
   m_TagString: Untagged
@@ -320,6 +321,36 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &5280287970829376564
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3901839354610347336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7db70e0ea77f5ac47a8f4565a9406397, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ShadowGroup: 0
+  m_ComponentVersion: 1
+  m_HasRenderer: 1
+  m_UseRendererSilhouette: 1
+  m_CastsShadows: 1
+  m_SelfShadows: 0
+  m_ApplyToSortingLayers: 8378034acbc8819400000000
+  m_ShapePath:
+  - {x: -0.5, y: -0.5, z: 0}
+  - {x: -0.5, y: 0.5, z: 0}
+  - {x: 0.5, y: 0.5, z: 0}
+  - {x: 0.5, y: -0.5, z: 0}
+  m_ShapePathHash: 0
+  m_Mesh: {fileID: 0}
+  m_InstanceId: -332806
+  m_LocalBounds:
+    m_Center: {x: 0, y: 0, z: 0}
+    m_Extent: {x: 0.5, y: 0.5, z: 0}
 --- !u!1 &4178585402875799201
 GameObject:
   m_ObjectHideFlags: 0
@@ -588,6 +619,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -231518543423778823, guid: 3d70d890efc07144d8e81a2418585a8b, type: 3}
+      propertyPath: m_InstanceId
+      value: -332206
+      objectReference: {fileID: 0}
     - target: {fileID: 721614779718937400, guid: 3d70d890efc07144d8e81a2418585a8b, type: 3}
       propertyPath: m_Name
       value: MovingBlock
@@ -598,7 +633,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1592763719120775641, guid: 3d70d890efc07144d8e81a2418585a8b, type: 3}
       propertyPath: m_RootOrder
-      value: -1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1592763719120775641, guid: 3d70d890efc07144d8e81a2418585a8b, type: 3}
       propertyPath: m_LocalScale.x
