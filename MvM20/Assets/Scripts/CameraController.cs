@@ -133,8 +133,12 @@ public class CameraController : MonoBehaviour
     {
         zoomOutCamera.transform.position = new Vector3(xVal, yVal, zoomOutCamera.transform.position.z);
         zoomOutCamera.m_Lens.OrthographicSize = orth;
-        cameraAnimator.SetTrigger("LeftZoom");
-        isFollowCam = false;
+        if (isFollowCam)
+        {
+            cameraAnimator.SetTrigger("LeftZoom");
+            isFollowCam = false;
+        }
+
         isPanX = panX;
     }
 }

@@ -43,6 +43,14 @@ public class DataManager : MonoBehaviour
         StartScreen.SetActive(true);
     }
 
+    private void Update()
+    {
+        if (Input.GetButtonDown("Cancel"))
+        {
+            QuitGame();
+        }
+    }
+
     public void IncreaseGrowPowerUps()
     {
         GrowPowerUps += 1;
@@ -89,5 +97,12 @@ public class DataManager : MonoBehaviour
         growCounterUX.SetMaxGrow(NextThreshold);
         sizeIndicatorUX.AddSizeIndicator();
         playerController.IncreaseGrowLogic();
+    }
+    public void QuitGame()
+    {
+        #if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+        #endif
+        Application.Quit();
     }
 }
