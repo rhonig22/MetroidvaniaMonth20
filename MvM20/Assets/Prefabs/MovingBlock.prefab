@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &354721685131762235
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4056935674409205544}
+  m_Layer: 0
+  m_Name: OverlapPos
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4056935674409205544
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354721685131762235}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.5, y: -0.25, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2152848523384959343}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &616218843253785787
 GameObject:
   m_ObjectHideFlags: 0
@@ -266,6 +297,7 @@ Transform:
   m_Children:
   - {fileID: 8620912668003465313}
   - {fileID: 8738039486414597938}
+  - {fileID: 4056935674409205544}
   m_Father: {fileID: 30159586738144298}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -347,7 +379,7 @@ MonoBehaviour:
   - {x: 0.5, y: -0.5, z: 0}
   m_ShapePathHash: 0
   m_Mesh: {fileID: 0}
-  m_InstanceId: -332806
+  m_InstanceId: 38766
   m_LocalBounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 0.5, y: 0.5, z: 0}
@@ -621,7 +653,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -231518543423778823, guid: 3d70d890efc07144d8e81a2418585a8b, type: 3}
       propertyPath: m_InstanceId
-      value: -332206
+      value: -22084
       objectReference: {fileID: 0}
     - target: {fileID: 721614779718937400, guid: 3d70d890efc07144d8e81a2418585a8b, type: 3}
       propertyPath: m_Name
@@ -750,6 +782,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   blockRb: {fileID: 4160499129597411029}
   blockSprite: {fileID: 3901839354610347336}
+  overlapPos: {fileID: 4056935674409205544}
 --- !u!50 &4160499129597411029 stripped
 Rigidbody2D:
   m_CorrespondingSourceObject: {fileID: 3444277590552138534, guid: 3d70d890efc07144d8e81a2418585a8b, type: 3}

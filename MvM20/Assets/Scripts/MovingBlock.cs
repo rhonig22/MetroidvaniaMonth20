@@ -6,6 +6,7 @@ public class MovingBlock : MonoBehaviour
 {
     [SerializeField] Rigidbody2D blockRb;
     [SerializeField] GameObject blockSprite;
+    [SerializeField] Transform overlapPos;
     private readonly float dontFlipTime = .5f;
     private float speed = 3;
     private Vector2 currentVelocity = Vector2.zero;
@@ -15,7 +16,6 @@ public class MovingBlock : MonoBehaviour
     void FixedUpdate()
     {
         Move(speed * Time.fixedDeltaTime);
-        dontFlipTimer -= Time.fixedDeltaTime;
     }
 
     private void Move(float xSpeed)
@@ -53,6 +53,13 @@ public class MovingBlock : MonoBehaviour
         {
             Vector2 normal = collision.GetContact(i).normal;
             flip |= Vector2.Angle(normal, Vector2.right) == 0 || Vector2.Angle(normal, Vector2.right) == 180;
+        }
+
+        if (!flip)
+        {
+            var hits = Physics2D.CircleCast(overlapPos.position, .5f, transform.right);
+            if (hits.collider == collision.collider)
+                flip = true;
         }
 
         if (flip)

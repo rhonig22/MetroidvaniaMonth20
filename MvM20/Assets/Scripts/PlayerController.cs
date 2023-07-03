@@ -13,6 +13,7 @@ public class PlayerController : MonoBehaviour
     private readonly int baseJumpForce = 4;
     private readonly int jumpMultiplier = 4;
     private readonly int additionalJumpForce = 9;
+    private readonly int maxSoundQueueCount = 3;
     private readonly float speedIncrease = 2f;
     private readonly float coyoteTime = .2f;
     private readonly float jumpBufferTime = .2f;
@@ -544,7 +545,7 @@ public class PlayerController : MonoBehaviour
                 audioSource.clip = clip;
                 audioSource.Play();
             }
-            else
+            else if (audioQueue.Count < maxSoundQueueCount)
             {
                 audioQueue.Add(clip);
             }
