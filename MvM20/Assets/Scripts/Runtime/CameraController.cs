@@ -14,7 +14,7 @@ public class CameraController : MonoBehaviour
     private CinemachineBasicMultiChannelPerlin zoomNoisePerlin;
     private readonly float orthoSize = 5;
     private readonly float shrinkSize = 5;
-    private readonly float zoomSmoothTime = .25f;
+    private readonly float zoomSmoothTime = .5f;
     private readonly float shakeAmplitude = 2f;
     private readonly float shakeFrequency = 2f;
     private readonly float shakeTime = .25f;

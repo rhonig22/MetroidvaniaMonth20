@@ -7,7 +7,7 @@ public class TipUxManager : MonoBehaviour
     [SerializeField] GameObject groundPoundTip;
     [SerializeField] GameObject reboundTip;
     private float countdown = 0;
-    private readonly float countdownTime = 1f;
+    private readonly float countdownTime = 5f;
 
     private void Update()
     {
