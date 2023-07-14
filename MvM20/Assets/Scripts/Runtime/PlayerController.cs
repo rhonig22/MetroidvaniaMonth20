@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
     private readonly float speedIncrease = 2f;
     private readonly float coyoteTime = .2f;
     private readonly float jumpBufferTime = .2f;
+    private readonly float landBufferTime = .35f;
     private readonly float reboundBufferTime = .4f;
     private readonly float scaleChangeTime = .25f;
     private readonly float baseGravity = 2f;
@@ -46,11 +47,13 @@ public class PlayerController : MonoBehaviour
     private float horizontalInput = 0;
     private bool grounded = false;
     private bool jump = false;
+    private bool isFalling = false;
     private bool isInCannon = false;
     private bool isCannoning = false;
     private int currentJumpForce;
     private float coyoteTimeCounter = 0;
     private float jumpBufferCounter = 0;
+    private float landBufferCounter = 0;
     private float reboundBufferCounter = 0;
     private float landingVelocity = 0;
     private float triggerAreaSideValue = 0;
@@ -133,6 +136,7 @@ public class PlayerController : MonoBehaviour
         else
         {
             coyoteTimeCounter -= Time.deltaTime;
+            landBufferCounter -= Time.deltaTime;
         }
 
         // Jump Buffer Logic
@@ -164,6 +168,12 @@ public class PlayerController : MonoBehaviour
         {
             playerRB.velocity = new Vector2(playerRB.velocity.x, playerRB.velocity.y * .5f);
             coyoteTimeCounter = 0;
+        }
+
+        if (!isFalling && playerRB.velocity.y < 0f)
+        {
+            animator.SetBool("Jump", false);
+            isFalling = true;
         }
 
         if (rebounding && playerRB.velocity.y <= 0f)
@@ -206,10 +216,9 @@ public class PlayerController : MonoBehaviour
         if (!grounded)
         {
             Jumps--;
-            // animator.ResetTrigger("jump");
         }
 
-        // animator.SetTrigger("jump");
+        animator.SetBool("Jump", true);
         PlaySound(jumpClip);
         playerRB.AddForce(Vector3.up * (grounded ? currentJumpForce : additionalJumpForce), ForceMode2D.Impulse);
         jump = false;
@@ -276,6 +285,7 @@ public class PlayerController : MonoBehaviour
     private void OnCollisionExit2D(Collision2D collision)
     {
         grounded = false;
+        landBufferCounter = landBufferTime;
     }
 
     private void CheckGrounding(Collision2D collision)
@@ -289,8 +299,14 @@ public class PlayerController : MonoBehaviour
 
         if (!startGrounded && grounded && !isDead)
         {
-            // animator.ResetTrigger("jump");
+            if (landBufferCounter < 0)
+            {
+                animator.SetBool("Jump", false);
+                animator.SetTrigger("Land");
+            }
+
             Jumps = 0;
+            isFalling = false;
             landingVelocity = collision.relativeVelocity.y;
             EndGroundPound();
             EndCannon();
@@ -303,7 +319,6 @@ public class PlayerController : MonoBehaviour
             return;
 
         isDead = true;
-        animator.SetTrigger("Death");
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
