@@ -172,7 +172,6 @@ public class PlayerController : MonoBehaviour
 
         if (!isFalling && playerRB.velocity.y < 0f)
         {
-            animator.SetBool("Jump", false);
             isFalling = true;
         }
 
@@ -218,8 +217,8 @@ public class PlayerController : MonoBehaviour
             Jumps--;
         }
 
-        animator.SetBool("Jump", true);
-        PlaySound(jumpClip);
+        animator.SetTrigger("Jump");
+        PlaySound(jumpClip, 1 - .1f*(Scale-1));
         playerRB.AddForce(Vector3.up * (grounded ? currentJumpForce : additionalJumpForce), ForceMode2D.Impulse);
         jump = false;
     }
@@ -301,7 +300,6 @@ public class PlayerController : MonoBehaviour
         {
             if (landBufferCounter < 0)
             {
-                animator.SetBool("Jump", false);
                 animator.SetTrigger("Land");
             }
 
@@ -446,12 +444,13 @@ public class PlayerController : MonoBehaviour
     private void StartRebound()
     {
         rebounding = true;
+        animator.SetTrigger("Jump");
         float newForce = currentJumpForce + landingVelocity / 4;
         Debug.Log(newForce);
         playerRB.AddForce(Vector3.up * newForce, ForceMode2D.Impulse);
         poundTrail.startWidth = Scale;
         poundTrail.emitting = true;
-        PlaySound(reboundClip);
+        PlaySound(reboundClip, .5f);
     }
 
     private void EndRebound()
@@ -551,13 +550,14 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
-    private void PlaySound(AudioClip clip)
+    private void PlaySound(AudioClip clip, float pitch = 1f)
     {
         if (DataManager.GameStarted)
         {
             if (!audioSource.isPlaying)
             {
                 audioSource.clip = clip;
+                audioSource.pitch = pitch;
                 audioSource.Play();
             }
             else if (audioQueue.Count < maxSoundQueueCount)
@@ -574,6 +574,7 @@ public class PlayerController : MonoBehaviour
             if (!audioSource.isPlaying && audioQueue.Count > 0)
             {
                 audioSource.clip = audioQueue[0];
+                audioSource.pitch = 1f;
                 audioSource.Play();
                 audioQueue.RemoveAt(0);
             }
