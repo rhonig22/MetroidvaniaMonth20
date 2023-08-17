@@ -1,9 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEditor;
-using MvM20;
-
+using UnityEngine;
+#if UNITY_EDITOR
 namespace MvM20.Editor
 {
     [CanEditMultipleObjects]
@@ -35,3 +34,4 @@ namespace MvM20.Editor
         }
     }
 }
+#endif
